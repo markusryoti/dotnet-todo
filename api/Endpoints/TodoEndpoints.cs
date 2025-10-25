@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +15,7 @@ public static class TodoEndpoints
             return TypedResults.Ok(todos);
         });
 
-        group.MapGet("/{id}", async (int id, [FromServices] ITodoService svc) =>
+        group.MapGet("/{id}", [Authorize] async (int id, [FromServices] ITodoService svc) =>
         {
             var found = await svc.GetByIdAsync(id);
             return found is null

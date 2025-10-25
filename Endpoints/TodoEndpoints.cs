@@ -36,21 +36,19 @@ public static class TodoEndpoints
 
         group.MapPut("/{id}", async (int id, Todo inputTodo, [FromServices] ITodoService svc) =>
         {
-            var todo = await svc.GetByIdAsync(id);
-            if (todo is null) return Results.NotFound();
-
-            todo.Title = inputTodo.Title;
-            todo.IsComplete = inputTodo.IsComplete;
-            await svc.UpdateAsync(todo);
+            var found = await svc.UpdateAsync(id, inputTodo);
+            if (!found)
+            {
+                return Results.NotFound();
+            }
 
             return TypedResults.NoContent();
         });
 
         group.MapDelete("/{id}", async (int id, [FromServices] ITodoService svc) =>
         {
-            if (await svc.GetByIdAsync(id) is Todo todo)
+            if (await svc.DeleteAsync(id))
             {
-                await svc.DeleteAsync(todo);
                 return Results.NoContent();
             }
 

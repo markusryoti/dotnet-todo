@@ -5,8 +5,8 @@ public interface ITodoService
     Task<IEnumerable<Todo>> GetAllAsync();
     Task<Todo?> GetByIdAsync(int id);
     Task AddAsync(Todo todo);
-    Task UpdateAsync(Todo todo);
-    Task DeleteAsync(Todo todo);
+    Task<bool> UpdateAsync(int id, Todo todo);
+    Task<bool> DeleteAsync(int id);
 }
 
 public class TodoService : ITodoService
@@ -30,15 +30,26 @@ public class TodoService : ITodoService
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(Todo todo)
+    public async Task<bool> UpdateAsync(int id, Todo input)
     {
-        _db.Todos.Update(todo);
+        var todo = await _db.Todos.FindAsync(id);
+        if (todo is null) return false;
+
+        todo.Title = input.Title;
+        todo.IsComplete = input.IsComplete;
+
         await _db.SaveChangesAsync();
+        return true;
     }
 
-    public async Task DeleteAsync(Todo todo)
+    public async Task<bool> DeleteAsync(int id)
     {
-        _db.Todos.Remove(todo);
+        var existingTodo = await _db.Todos.FindAsync(id);
+        if (existingTodo is null) return false;
+
+        _db.Todos.Remove(existingTodo);
         await _db.SaveChangesAsync();
+
+        return true;
     }
 }

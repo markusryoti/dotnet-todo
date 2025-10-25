@@ -3,6 +3,7 @@ using FluentValidation;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,17 +13,40 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<ITodoService, TodoService>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApiDocument(config =>
+builder.Services.AddSwaggerGen(c =>
 {
-    config.DocumentName = "TodoAPI";
-    config.Title = "TodoAPI v1";
-    config.Version = "v1";
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Todo API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\""
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", p =>
-        p.WithOrigins("*")
+        p.WithOrigins("http://localhost:5173") // Update this with your frontend URL
          .AllowCredentials()
          .AllowAnyHeader()
          .AllowAnyMethod());
@@ -57,17 +81,20 @@ var app = builder.Build();
 
 app.Logger.LogInformation("The app started");
 
+// Add CORS before authentication middleware
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.Logger.LogInformation("In Development environment");
 
-    app.UseOpenApi();
-    app.UseSwaggerUi(config =>
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        config.DocumentTitle = "TodoAPI";
-        config.Path = "/swagger";
-        config.DocumentPath = "/swagger/{documentName}/swagger.json";
-        config.DocExpansion = "list";
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Todo API V1");
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
     });
 }
 
@@ -85,9 +112,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapGet("/", () => "✅ Todo API running");
-
 app.MapTodoEndpoints();
-
 AuthEndpoints.Map(app);
 
 app.Run();

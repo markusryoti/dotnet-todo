@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 public static class TodoEndpoints
@@ -8,7 +9,7 @@ public static class TodoEndpoints
     {
         var group = endpoints.MapGroup("/todos");
 
-        group.MapGet("/", async ([FromServices] ITodoService svc) =>
+        group.MapGet("/", [Authorize] async ([FromServices] ITodoService svc) =>
         {
             var todos = await svc.GetAllAsync();
 
@@ -23,7 +24,7 @@ public static class TodoEndpoints
                 : Results.Ok(found);
         });
 
-        group.MapPost("/", async ([FromBody] TodoDto todoDto, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
+        group.MapPost("/", [Authorize] async ([FromBody] TodoDto todoDto, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
             {
                 var result = await validator.ValidateAsync(todoDto);
                 if (!result.IsValid)
@@ -40,7 +41,7 @@ public static class TodoEndpoints
                 return TypedResults.Created($"/todos/{todo.Id}", todo);
             });
 
-        group.MapPatch("/{id}", async (int id, TodoDto inputTodo, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
+        group.MapPatch("/{id}", [Authorize] async (int id, TodoDto inputTodo, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
         {
             var result = await validator.ValidateAsync(inputTodo);
             if (!result.IsValid)
@@ -55,7 +56,7 @@ public static class TodoEndpoints
             return TypedResults.NoContent();
         });
 
-        group.MapDelete("/{id}", async (int id, [FromServices] ITodoService svc) =>
+        group.MapDelete("/{id}", [Authorize] async (int id, [FromServices] ITodoService svc) =>
         {
             if (await svc.DeleteAsync(id))
             {

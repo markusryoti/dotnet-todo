@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 public static class TodoEndpoints
@@ -21,12 +23,16 @@ public static class TodoEndpoints
                 : Results.Ok(found);
         });
 
-        group.MapPost("/", async ([FromBody] TodoDto todoDto, [FromServices] ITodoService svc) =>
+        group.MapPost("/", async ([FromBody] TodoDto todoDto, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
             {
+                var result = await validator.ValidateAsync(todoDto);
+                if (!result.IsValid)
+                    return Results.ValidationProblem(result.ToDictionary());
+
                 var todo = new Todo
                 {
-                    Title = todoDto.Title,
-                    IsComplete = todoDto.IsComplete
+                    Title = todoDto.Title!,
+                    IsComplete = (bool)todoDto.IsComplete!
                 };
 
                 await svc.AddAsync(todo);
@@ -34,9 +40,13 @@ public static class TodoEndpoints
                 return TypedResults.Created($"/todos/{todo.Id}", todo);
             });
 
-        group.MapPut("/{id}", async (int id, Todo inputTodo, [FromServices] ITodoService svc) =>
+        group.MapPatch("/{id}", async (int id, TodoDto inputTodo, IValidator<TodoDto> validator, [FromServices] ITodoService svc) =>
         {
-            var found = await svc.UpdateAsync(id, inputTodo);
+            var result = await validator.ValidateAsync(inputTodo);
+            if (!result.IsValid)
+                return Results.ValidationProblem(result.ToDictionary());
+
+            var found = await svc.UpdateAsync(id, inputTodo.Title!, (bool)inputTodo.IsComplete!);
             if (!found)
             {
                 return Results.NotFound();

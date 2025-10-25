@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 public static class TodoEndpoints
@@ -7,20 +8,33 @@ public static class TodoEndpoints
         var group = endpoints.MapGroup("/todos");
 
         group.MapGet("/", async (AppDbContext db) =>
-            await db.Todos.ToListAsync());
+        {
+            var todos = await db.Todos.ToListAsync();
+
+            return TypedResults.Ok(todos);
+        });
 
         group.MapGet("/{id}", async (int id, AppDbContext db) =>
-            await db.Todos.FindAsync(id)
-                is Todo todo
-                    ? Results.Ok(todo)
-                    : Results.NotFound());
-
-        group.MapPost("/", async (Todo todo, AppDbContext db) =>
         {
-            db.Todos.Add(todo);
-            await db.SaveChangesAsync();
-            return Results.Created($"/todos/{todo.Id}", todo);
+            var found = await db.Todos.FindAsync(id);
+            return found is null
+                ? Results.NotFound()
+                : Results.Ok(found);
         });
+
+        group.MapPost("/", async ([FromBody] TodoDto todoDto, AppDbContext db) =>
+            {
+                var todo = new Todo
+                {
+                    Title = todoDto.Title,
+                    IsComplete = todoDto.IsComplete
+                };
+
+                db.Todos.Add(todo);
+                await db.SaveChangesAsync();
+
+                return TypedResults.Created($"/todos/{todo.Id}", todo);
+            });
 
         group.MapPut("/{id}", async (int id, Todo inputTodo, AppDbContext db) =>
         {
@@ -31,7 +45,7 @@ public static class TodoEndpoints
             todo.IsComplete = inputTodo.IsComplete;
             await db.SaveChangesAsync();
 
-            return Results.NoContent();
+            return TypedResults.NoContent();
         });
 
         group.MapDelete("/{id}", async (int id, AppDbContext db) =>
@@ -43,7 +57,7 @@ public static class TodoEndpoints
                 return Results.NoContent();
             }
 
-            return Results.NotFound();
+            return TypedResults.NotFound();
         });
 
         return endpoints;

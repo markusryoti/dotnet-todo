@@ -1,0 +1,1 @@
+public record TodoDto(string Title, bool IsComplete);

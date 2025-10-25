@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,38 @@ builder.Services.AddOpenApiDocument(config =>
     config.Title = "TodoAPI v1";
     config.Version = "v1";
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", p =>
+        p.WithOrigins("*")
+         .AllowCredentials()
+         .AllowAnyHeader()
+         .AllowAnyMethod());
+});
+
+// JWT config
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSection["Key"]!);
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"],
+            ValidAudience = jwtSection["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 
 builder.Services.AddValidatorsFromAssemblyContaining<TodoDtoValidator>();
 
@@ -52,5 +87,7 @@ using (var scope = app.Services.CreateScope())
 app.MapGet("/", () => "✅ Todo API running");
 
 app.MapTodoEndpoints();
+
+AuthEndpoints.Map(app);
 
 app.Run();

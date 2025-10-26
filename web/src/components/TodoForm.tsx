@@ -20,7 +20,7 @@ export default function TodoForm({
       const newTodo: Todo = {
         id: Date.now(),
         title,
-        completed: false,
+        isComplete: false,
         createdAt: new Date().toISOString(),
       };
 

@@ -1,28 +1,91 @@
 import TodoForm from "./components/TodoForm";
 import TodoList from "./components/TodoList";
-import { useState } from "react";
 import type { Todo } from "./types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { addTodo, deleteTodo, getTodos, updateTodo } from "./query";
+import { useAuth } from "./hooks/useAuth";
+import { useNavigate } from "react-router";
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
 
-  const addTodo = (newTodo: Todo) => {
-    setTodos((prevTodos) => [...prevTodos, newTodo]);
-  };
-
-  const toggleDone = (id: number) => {
-    const updated = todos.map((t) => {
-      if (t.id === id) {
-        return {
-          ...t,
-          completed: !t.completed,
-        };
+  const { data: todos, isPending: loading } = useQuery({
+    queryKey: ["todos"],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) {
+        await navigate("/login");
+        return [];
       }
 
-      return t;
-    });
+      return await getTodos(token);
+    },
+  });
 
-    setTodos(updated);
+  const queryClient = useQueryClient();
+
+  const addMutation = useMutation({
+    mutationFn: addTodo,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateTodo,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTodo,
+  });
+
+  const submitTodo = async (newTodo: Todo) => {
+    const token = await getToken();
+    if (!token) {
+      await navigate("/login");
+      return;
+    }
+
+    addMutation.mutate(
+      { data: newTodo, token },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["todos"] });
+        },
+      }
+    );
+  };
+
+  const removeTodo = async (id: number) => {
+    const token = await getToken();
+    if (!token) {
+      await navigate("/login");
+      return;
+    }
+
+    deleteMutation.mutate(
+      { data: { id }, token },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["todos"] });
+        },
+      }
+    );
+  };
+
+  const changeTodo = async (id: number, patchedTodo: Todo) => {
+    const token = await getToken();
+    if (!token) {
+      await navigate("/login");
+      return;
+    }
+
+    updateMutation.mutate(
+      { data: patchedTodo, token },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ["todos"] });
+        },
+      }
+    );
   };
 
   return (
@@ -35,8 +98,13 @@ function App() {
         paddingTop: "24px",
       }}
     >
-      <TodoForm addTodo={addTodo} />
-      <TodoList todos={todos} toggleDone={toggleDone} />
+      <TodoForm addTodo={submitTodo} />
+      <TodoList
+        todos={todos}
+        updateTodo={changeTodo}
+        deleteTodo={removeTodo}
+        loading={loading}
+      />
     </div>
   );
 }

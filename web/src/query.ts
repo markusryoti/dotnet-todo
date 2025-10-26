@@ -8,6 +8,12 @@ export async function getTodos(token: string) {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  if (!response.ok) {
+    handleError(response);
+    return;
+  }
+
   return (await response.json()) as Todo[];
 }
 
@@ -27,7 +33,7 @@ export async function addTodo(request: {
     body: JSON.stringify(request.data),
   });
   if (!response.ok) {
-    throw new Error("Error adding todo");
+    handleError(response);
   }
 }
 
@@ -48,7 +54,7 @@ export async function updateTodo(request: {
     body: JSON.stringify(request.data),
   });
   if (!response.ok) {
-    throw new Error("Error adding todo");
+    handleError(response);
   }
 }
 
@@ -62,7 +68,17 @@ export async function deleteTodo(request: {
       Authorization: `Bearer ${request.token}`,
     },
   });
+
   if (!response.ok) {
-    throw new Error("Error deleting todo");
+    handleError(response);
   }
+}
+
+function handleError(response: Response) {
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
+
+  throw new Error("Error deleting todo");
 }

@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
+import "./LoginForm.css";
 
 export default function LoginForm() {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ export default function LoginForm() {
   };
 
   return (
-    <Card variant="outlined" style={{ width: "500px", padding: "16px" }}>
+    <Card variant="outlined" className="form-card">
       <Typography
         component="h1"
         variant="h4"

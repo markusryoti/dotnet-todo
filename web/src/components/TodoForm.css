@@ -1,0 +1,5 @@
+.todo-form-body {
+  display: flex;
+  align-self: center;
+  gap: 8px;
+}

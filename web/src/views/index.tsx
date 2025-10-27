@@ -1,12 +1,12 @@
-import TodoForm from "./components/TodoForm";
-import TodoList from "./components/TodoList";
-import type { Todo } from "./types";
+import TodoForm from "../components/TodoForm";
+import TodoList from "../components/TodoList";
+import type { Todo } from "../types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addTodo, deleteTodo, getTodos, updateTodo } from "./query";
-import { useAuth } from "./hooks/useAuth";
+import { addTodo, deleteTodo, getTodos, updateTodo } from "../query";
+import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router";
 
-function App() {
+function Index() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
 
@@ -71,7 +71,7 @@ function App() {
     );
   };
 
-  const changeTodo = async (id: number, patchedTodo: Todo) => {
+  const changeTodo = async (patchedTodo: Todo) => {
     const token = await getToken();
     if (!token) {
       await navigate("/login");
@@ -89,24 +89,18 @@ function App() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingTop: "24px",
-      }}
-    >
-      <TodoForm addTodo={submitTodo} />
-      <TodoList
-        todos={todos}
-        updateTodo={changeTodo}
-        deleteTodo={removeTodo}
-        loading={loading}
-      />
+    <div className="container">
+      <div className="todo-container">
+        <TodoForm addTodo={submitTodo} />
+        <TodoList
+          todos={todos}
+          updateTodo={changeTodo}
+          deleteTodo={removeTodo}
+          loading={loading}
+        />
+      </div>
     </div>
   );
 }
 
-export default App;
+export default Index;

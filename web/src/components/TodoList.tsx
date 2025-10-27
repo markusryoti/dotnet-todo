@@ -15,7 +15,7 @@ export default function TodoList({
   loading,
 }: {
   todos: Todo[] | undefined;
-  updateTodo: (id: number, updated: Todo) => void;
+  updateTodo: (updated: Todo) => void;
   deleteTodo: (id: number) => void;
   loading: boolean;
 }) {
@@ -26,7 +26,7 @@ export default function TodoList({
   const sorted = todos?.sort((a, b) => a.id - b.id);
 
   return (
-    <List sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}>
+    <List sx={{ width: "100%", bgcolor: "background.paper" }}>
       {sorted?.map((todo) => (
         <ListItem key={todo.id}>
           <ListItemText
@@ -38,7 +38,7 @@ export default function TodoList({
             edge="end"
             checked={todo.isComplete}
             onChange={() =>
-              updateTodo(todo.id, { ...todo, isComplete: !todo.isComplete })
+              updateTodo({ ...todo, isComplete: !todo.isComplete })
             }
           />
           <IconButton

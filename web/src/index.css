@@ -58,3 +58,18 @@ h1, h2, h3, h4, h5, h6 {
 #root, #__next {
   isolation: isolate;
 }
+
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 0 mx-auto;
+}
+
+.todo-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 24px;
+  width: 500px;
+}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Todo } from "../types";
 import { Button, TextField } from "@mui/material";
+import "./TodoForm.css";
 
 export default function TodoForm({
   addTodo,
@@ -31,7 +32,7 @@ export default function TodoForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      <div className="todo-form-body">
         <TextField
           id="outlined-basic"
           label="Todo Name"
